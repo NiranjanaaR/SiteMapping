@@ -44,8 +44,11 @@ export async function fetchDepth(loc: LatLng): Promise<SourceOutcome<number>> {
       pickNumber(Object.values(props).find((v) => typeof v === "number"));
     if (raw == null) return { ok: true, value: null, source: LABEL };
 
-    // Elevation convention: negative under the sea -> positive depth.
-    const depth = raw < 0 ? Math.round(-raw) : 0;
+    // Elevation convention: negative under the sea -> positive depth. A value
+    // >= 0 is land / at sea level (or an unexpected sign convention) -> report
+    // null (no reliable sea depth) rather than guessing. `detail` keeps the raw
+    // value so /api/diagnostics can reveal the source's actual convention.
+    const depth = raw < 0 ? Math.round(-raw) : null;
     return { ok: true, value: depth, source: LABEL, detail: raw };
   } catch (e) {
     return fail(LABEL, e);

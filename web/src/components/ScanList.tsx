@@ -61,7 +61,13 @@ export default function ScanList({ scan, activeIndex, onSelect, liveData }: Prop
               {c.result.verdict}
               {isLiveFacts(c.facts) && <span className="prov live">live</span>}
             </span>
-            <br />
+            <span className="sfacts">
+              {c.facts.depth_m != null ? `${c.facts.depth_m} m` : "—"} ·{" "}
+              {c.facts.temp_c != null ? `${c.facts.temp_c}°C` : "—"} ·{" "}
+              {c.facts.wave_hs_m != null ? `${c.facts.wave_hs_m} m Hs` : "—"}
+              {c.facts.inProtectedArea && " · 🛡"}
+              {c.facts.nearShippingLane && " · ⚓"}
+            </span>
             <span className="sc">{shortPlace(c)}</span>
           </span>
         </button>

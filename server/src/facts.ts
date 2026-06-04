@@ -52,21 +52,9 @@ const ALL_SYNTHETIC: Facts["provenance"] = {
 export function getSyntheticFacts(loc: LatLng): Facts {
   const rnd = streams(loc.lat, loc.lng);
 
-  // ~92% of clicked points sit on water; the rest read as land (no marine data).
-  const onWater = rnd(0) > 0.08;
-
-  if (!onWater) {
-    return {
-      depth_m: null,
-      temp_c: null,
-      wave_hs_m: null,
-      inProtectedArea: false,
-      nearShippingLane: false,
-      onWater: false,
-      confidence: { depth: "missing", temp: "missing", wave: "missing" },
-      provenance: { ...ALL_SYNTHETIC },
-    };
-  }
+  // We can't reliably tell land from sea without a coastline mask, so we never
+  // guess "on land" — the user is screening the coast. Real bathymetry (when
+  // live) provides the actual depth; here we synthesise a plausible one.
 
   // Depth: skewed toward shallow shelf with occasional deep fjord/offshore.
   const depthRoll = rnd(1);
@@ -121,19 +109,12 @@ async function computeLiveFacts(loc: LatLng): Promise<Facts> {
   const settled = <T>(r: PromiseSettledResult<T | null>): T | null =>
     r.status === "fulfilled" ? r.value : null;
 
-  // Depth also tells us water vs land at this point.
+  // Use a live depth only when it's a clear sea depth (> 0 m). Otherwise keep
+  // the synthetic value rather than wrongly declaring the point "on land".
   const dp = settled(dpR);
-  if (dp?.ok && dp.value != null) {
-    if (dp.value > 0) {
-      facts.depth_m = dp.value;
-      facts.onWater = true;
-      facts.confidence.depth = "measured";
-    } else {
-      // 0 m -> land / at sea level: no marine site here.
-      facts.depth_m = null;
-      facts.onWater = false;
-      facts.confidence.depth = "missing";
-    }
+  if (dp?.ok && dp.value != null && dp.value > 0) {
+    facts.depth_m = dp.value;
+    facts.confidence.depth = "measured";
     facts.provenance.depth = "live";
   }
 

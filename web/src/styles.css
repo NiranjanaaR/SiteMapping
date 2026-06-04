@@ -797,8 +797,15 @@ input[type="range"] {
 .scan-info .sv {
   font-weight: 800;
 }
-.scan-info .sc {
+.scan-info .sfacts {
+  display: block;
   font-size: var(--fs-sm);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+.scan-info .sc {
+  font-size: 12px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
