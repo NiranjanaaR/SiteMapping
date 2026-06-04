@@ -390,7 +390,7 @@ export default function App() {
               <h2>Scan an area</h2>
               <p>
                 Search a place (or pan the map), pick a radius above, then press
-                <b> Scan area</b>. Candidate sites appear as coloured dots,
+                <b> ▶ Run scan</b>. Candidate sites appear as coloured dots,
                 ranked best-first here.
               </p>
             </div>

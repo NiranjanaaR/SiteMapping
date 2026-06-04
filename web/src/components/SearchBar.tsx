@@ -176,11 +176,11 @@ export default function SearchBar({
         disabled={!scanReady || scanning}
         title={
           scanReady
-            ? "Scan a grid of candidate sites in this area"
+            ? "Run the scan: rank candidate sites across this radius"
             : "Search a place or pick a map centre first"
         }
       >
-        {scanning ? "Scanning…" : "Scan area"}
+        {scanning ? "Scanning…" : "▶ Run scan"}
       </button>
     </div>
   );

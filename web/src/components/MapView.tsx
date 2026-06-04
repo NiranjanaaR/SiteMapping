@@ -214,7 +214,7 @@ export default function MapView({
       )}
       {mode === "scan" && !scan && (
         <div className="map-hint">
-          🗺️ Search a place or pan the map, pick a radius, then “Scan area”
+          🗺️ Search a place or pan the map, pick a radius, then “▶ Run scan”
         </div>
       )}
       {mode === "describe" && !scan && (
