@@ -40,7 +40,10 @@ async function getToken(): Promise<string> {
     body,
     signal: AbortSignal.timeout(config.timeoutMs),
   });
-  if (!res.ok) throw new Error(`token HTTP ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`token HTTP ${res.status} — ${body.slice(0, 200)}`);
+  }
   const data = (await res.json()) as { access_token?: string; expires_in?: number };
   if (!data.access_token) throw new Error("no access_token");
   cachedToken = {

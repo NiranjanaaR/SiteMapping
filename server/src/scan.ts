@@ -13,6 +13,7 @@ import { mapLimit } from "./cache.js";
 import { config } from "./config.js";
 import { getFacts, getSyntheticFacts } from "./facts.js";
 import { score } from "./scoring.js";
+import { fetchDepthBatch } from "./sources/depth.js";
 import type { LatLng, Rubric, SiteReport } from "./types.js";
 
 const KM_PER_DEG_LAT = 111.32;
@@ -101,9 +102,22 @@ export async function scanArea(req: ScanRequest): Promise<ScanResult> {
   // instead of a full grid smeared over land and sea.
   if (req.live && config.liveData) {
     const pool = candidates.slice(0, config.scanPool);
-    await mapLimit(pool, config.scanConcurrency, async (cand) => {
+
+    // Fetch every pool depth in one batched bathymetry request (fast + within
+    // rate limits); fall back to per-point if the batch call fails.
+    let depths: (number | null)[] = [];
+    try {
+      depths = await fetchDepthBatch(pool.map((c) => c.location));
+    } catch {
+      depths = [];
+    }
+
+    await mapLimit(pool, config.scanConcurrency, async (cand, i) => {
       try {
-        const liveFacts = await getFacts(cand.location, { skipShipping: true });
+        const liveFacts = await getFacts(cand.location, {
+          skipShipping: true,
+          depthOverride: depths.length ? { value: depths[i] ?? null } : undefined,
+        });
         cand.facts = liveFacts;
         cand.result = score(liveFacts, rubric);
       } catch {

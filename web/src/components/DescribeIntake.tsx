@@ -1,10 +1,7 @@
 import type { IntakeResult } from "../types";
 
 interface Props {
-  value: string;
-  onChange: (v: string) => void;
-  onSubmit: () => void;
-  loading: boolean;
+  onPickExample: (v: string) => void;
   result: IntakeResult | null;
 }
 
@@ -15,13 +12,7 @@ const EXAMPLES = [
   "Sensor buoy near Ålesund, deep water, wide area",
 ];
 
-export default function DescribeIntake({
-  value,
-  onChange,
-  onSubmit,
-  loading,
-  result,
-}: Props) {
+export default function DescribeIntake({ onPickExample, result }: Props) {
   return (
     <section className="block criteria" style={{ marginTop: 0 }}>
       <div className="block-head">
@@ -31,35 +22,19 @@ export default function DescribeIntake({
       </div>
       <div className="block-body">
         <p className="project-blurb" style={{ marginTop: 0 }}>
-          Write a plain-language brief. It’s parsed into a project type, an
-          editable rubric, and a region — then the area scan runs. Every inferred
-          choice is shown so you can adjust it.
+          Type a plain-language brief in the bar at the <b>top</b> (e.g. “kelp
+          farm near Arendal, sheltered water”) and press{" "}
+          <b>✨ Interpret &amp; scan</b>. It’s parsed into a project type, an
+          editable rubric, and a region, then the scan runs — every inferred
+          choice is shown below. Or tap an example to fill it in:
         </p>
-        <textarea
-          className="intake-text"
-          rows={3}
-          placeholder="e.g. 2-hectare mussel farm near Bergen, budget-sensitive…"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") onSubmit();
-          }}
-        />
         <div className="intake-examples">
           {EXAMPLES.map((ex) => (
-            <button key={ex} className="chip" onClick={() => onChange(ex)}>
+            <button key={ex} className="chip" onClick={() => onPickExample(ex)}>
               {ex}
             </button>
           ))}
         </div>
-        <button
-          className="btn btn-primary"
-          style={{ width: "100%", marginTop: 12 }}
-          onClick={onSubmit}
-          disabled={loading || !value.trim()}
-        >
-          {loading ? "Interpreting…" : "✨ Interpret & scan"}
-        </button>
 
         {result && (
           <div className="interpretation">

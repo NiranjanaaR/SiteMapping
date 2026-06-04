@@ -343,13 +343,7 @@ export default function App() {
 
     const describeCard =
       mode === "describe" ? (
-        <DescribeIntake
-          value={describeText}
-          onChange={setDescribeText}
-          onSubmit={runDescribe}
-          loading={loading}
-          result={intake}
-        />
+        <DescribeIntake onPickExample={setDescribeText} result={intake} />
       ) : null;
 
     // Scan / describe mode, a candidate selected → its full report.
@@ -460,12 +454,17 @@ export default function App() {
     <div className="app">
       <Header userEmail={USER_EMAIL} liveData={liveData} />
       <SearchBar
+        mode={mode}
         radiusKm={radiusKm}
         onRadiusChange={setRadiusKm}
         onSelectPlace={onSelectPlace}
         onScan={runScan}
         scanReady={!!rubric}
         scanning={loading && mode === "scan"}
+        describeText={describeText}
+        onDescribeChange={setDescribeText}
+        onDescribeSubmit={runDescribe}
+        describing={loading && mode === "describe"}
       />
       <div className="columns">
         <Sidebar

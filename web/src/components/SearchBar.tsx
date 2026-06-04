@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { geocode } from "../api";
-import type { GeocodeHit } from "../types";
+import type { GeocodeHit, InputMode } from "../types";
 
 interface Props {
+  mode: InputMode;
   radiusKm: number;
   onRadiusChange: (km: number) => void;
   onSelectPlace: (hit: GeocodeHit) => void;
@@ -10,17 +11,27 @@ interface Props {
   onScan: (place: GeocodeHit | null) => void;
   scanReady: boolean;
   scanning: boolean;
+  /** Describe-mode: the natural-language brief and its submit. */
+  describeText: string;
+  onDescribeChange: (v: string) => void;
+  onDescribeSubmit: () => void;
+  describing: boolean;
 }
 
 const RADII = [10, 30, 50];
 
 export default function SearchBar({
+  mode,
   radiusKm,
   onRadiusChange,
   onSelectPlace,
   onScan,
   scanReady,
   scanning,
+  describeText,
+  onDescribeChange,
+  onDescribeSubmit,
+  describing,
 }: Props) {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<GeocodeHit[]>([]);
@@ -119,6 +130,39 @@ export default function SearchBar({
     } else if (e.key === "Escape") {
       setOpen(false);
     }
+  }
+
+  // Describe mode: the top bar becomes the natural-language project input.
+  if (mode === "describe") {
+    return (
+      <div className="searchbar">
+        <div className="search-input-wrap">
+          <span className="glass" aria-hidden>
+            💬
+          </span>
+          <input
+            type="text"
+            aria-label="Describe your project"
+            placeholder="Describe your project — e.g. 2-hectare kelp farm near Arendal, sheltered water"
+            value={describeText}
+            onChange={(e) => onDescribeChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                onDescribeSubmit();
+              }
+            }}
+          />
+        </div>
+        <button
+          className="btn btn-primary"
+          onClick={onDescribeSubmit}
+          disabled={describing || !describeText.trim()}
+        >
+          {describing ? "Interpreting…" : "✨ Interpret & scan"}
+        </button>
+      </div>
+    );
   }
 
   return (

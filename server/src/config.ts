@@ -37,11 +37,13 @@ export const config = {
     process.env.PROTECTED_AREAS_URL ??
     "https://kart.miljodirektoratet.no/arcgis/rest/services/vern/MapServer/0",
 
-  /** Bathymetry WMS (GetFeatureInfo). EMODnet by default. */
+  /** Bathymetry via OpenTopoData (GEBCO dataset) — a simple JSON elevation API
+   * that returns real depths (negative elevation = below sea level) and supports
+   * batched point queries. Public instance is rate-limited (~1 req/s, 1000/day);
+   * point it at a self-hosted instance for heavy use. */
   bathymetry: {
-    wmsUrl:
-      process.env.BATHYMETRY_WMS_URL ?? "https://ows.emodnet-bathymetry.eu/wms",
-    layer: process.env.BATHYMETRY_WMS_LAYER ?? "emodnet:mean_atlas_land",
+    url: process.env.OPENTOPODATA_URL ?? "https://api.opentopodata.org/v1",
+    dataset: process.env.BATHYMETRY_DATASET ?? "gebco2020",
   },
 
   /** Per-request timeout for any single source call. */

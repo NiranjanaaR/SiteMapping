@@ -89,6 +89,9 @@ export function getSyntheticFacts(loc: LatLng): Facts {
 export interface FactsOptions {
   /** Skip the slower AIS call (used during scans to protect rate limits). */
   skipShipping?: boolean;
+  /** Use a pre-fetched depth (m, or null for land) instead of calling the API
+   * — lets a scan batch all depths in one request. */
+  depthOverride?: { value: number | null };
 }
 
 /**
@@ -110,9 +113,20 @@ async function computeLiveFacts(
 ): Promise<Facts> {
   const facts = getSyntheticFacts(loc);
 
+  // Use a batched depth if provided; otherwise fetch it per-point.
+  const depthP = opts.depthOverride
+    ? Promise.resolve({
+        ok: true,
+        value: opts.depthOverride.value,
+        source: "GEBCO (batch)",
+      })
+    : sourcesEnabled.depth
+      ? fetchDepth(loc)
+      : Promise.resolve(null);
+
   const [paR, dpR, tpR, wvR, shR] = await Promise.allSettled([
     sourcesEnabled.protectedArea ? fetchProtectedArea(loc) : Promise.resolve(null),
-    sourcesEnabled.depth ? fetchDepth(loc) : Promise.resolve(null),
+    depthP,
     sourcesEnabled.temperature ? fetchTemperature(loc) : Promise.resolve(null),
     sourcesEnabled.waves ? fetchWaves(loc) : Promise.resolve(null),
     sourcesEnabled.shipping && !opts.skipShipping
