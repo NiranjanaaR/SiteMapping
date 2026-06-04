@@ -50,11 +50,15 @@ export const config = {
   /** How long live facts for a point are reused (ms). Default 30 min. */
   factsCacheTtlMs: Number(process.env.FACTS_CACHE_TTL_MS) || 30 * 60 * 1000,
 
-  /** In a scan, how many top candidates get verified with live data. */
-  scanLiveTop: Number(process.env.SCAN_LIVE_TOP) || 12,
+  /** In a live scan, how many top synthetic candidates to verify with the APIs
+   * (the pool we then filter down to real water sites). */
+  scanPool: Number(process.env.SCAN_POOL) || 20,
+
+  /** Max water sites to return in the live shortlist. */
+  scanShortlist: Number(process.env.SCAN_SHORTLIST) || 15,
 
   /** Max concurrent live fetches during a scan. */
-  scanConcurrency: Number(process.env.SCAN_CONCURRENCY) || 6,
+  scanConcurrency: Number(process.env.SCAN_CONCURRENCY) || 8,
 };
 
 /** Which sources should actually be attempted, given the config. */

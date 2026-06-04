@@ -95,25 +95,42 @@ export async function scanArea(req: ScanRequest): Promise<ScanResult> {
   // Rank: best score first; excluded sites sink to the bottom.
   candidates.sort((a, b) => b.result.score - a.result.score);
 
-  // Verify the top candidates with live data, then re-rank on the real numbers.
-  let liveVerified = 0;
+  // --- Live mode: verify a pool, drop land, return a clean shortlist ---------
+  // The marine APIs only return data over water, so live verification doubles as
+  // a land mask. We end up with the best *real* water sites for the project,
+  // instead of a full grid smeared over land and sea.
   if (req.live && config.liveData) {
-    const top = candidates.slice(0, config.scanLiveTop);
-    await mapLimit(top, config.scanConcurrency, async (cand) => {
+    const pool = candidates.slice(0, config.scanPool);
+    await mapLimit(pool, config.scanConcurrency, async (cand) => {
       try {
-        const liveFacts = await getFacts(cand.location);
+        const liveFacts = await getFacts(cand.location, { skipShipping: true });
         cand.facts = liveFacts;
         cand.result = score(liveFacts, rubric);
-        // Only count it as verified if a source actually returned live data.
-        if (Object.values(liveFacts.provenance).some((p) => p === "live")) {
-          liveVerified++;
-        }
       } catch {
-        // keep the synthetic facts/result on failure
+        // keep synthetic facts/result on failure
       }
     });
-    candidates.sort((a, b) => b.result.score - a.result.score);
+
+    const water = pool.filter((c) => c.facts.onWater);
+    const verified = water.filter((c) =>
+      Object.values(c.facts.provenance).some((p) => p === "live"),
+    );
+
+    // If live verification yielded real water sites, return that shortlist.
+    // Otherwise (e.g. all sources unreachable) fall back to the synthetic grid.
+    if (water.length > 0) {
+      water.sort((a, b) => b.result.score - a.result.score);
+      const shortlist = water.slice(0, config.scanShortlist);
+      return {
+        center,
+        radiusKm,
+        candidates: shortlist,
+        evaluated,
+        onWater: water.length,
+        liveVerified: verified.length,
+      };
+    }
   }
 
-  return { center, radiusKm, candidates, evaluated, onWater, liveVerified };
+  return { center, radiusKm, candidates, evaluated, onWater, liveVerified: 0 };
 }

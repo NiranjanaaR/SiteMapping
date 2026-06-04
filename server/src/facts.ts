@@ -86,17 +86,28 @@ export function getSyntheticFacts(loc: LatLng): Facts {
   };
 }
 
+export interface FactsOptions {
+  /** Skip the slower AIS call (used during scans to protect rate limits). */
+  skipShipping?: boolean;
+}
+
 /**
  * Live facts (cached by ~100 m): synthetic baseline overlaid with whatever the
  * live sources return. When LIVE_DATA is off this is just the synthetic facts.
  */
-export async function getFacts(loc: LatLng): Promise<Facts> {
+export async function getFacts(
+  loc: LatLng,
+  opts: FactsOptions = {},
+): Promise<Facts> {
   if (!config.liveData) return getSyntheticFacts(loc);
-  const key = `${loc.lat.toFixed(3)},${loc.lng.toFixed(3)}`;
-  return cached(key, config.factsCacheTtlMs, () => computeLiveFacts(loc));
+  const key = `${loc.lat.toFixed(3)},${loc.lng.toFixed(3)}${opts.skipShipping ? ":ns" : ""}`;
+  return cached(key, config.factsCacheTtlMs, () => computeLiveFacts(loc, opts));
 }
 
-async function computeLiveFacts(loc: LatLng): Promise<Facts> {
+async function computeLiveFacts(
+  loc: LatLng,
+  opts: FactsOptions,
+): Promise<Facts> {
   const facts = getSyntheticFacts(loc);
 
   const [paR, dpR, tpR, wvR, shR] = await Promise.allSettled([
@@ -104,32 +115,53 @@ async function computeLiveFacts(loc: LatLng): Promise<Facts> {
     sourcesEnabled.depth ? fetchDepth(loc) : Promise.resolve(null),
     sourcesEnabled.temperature ? fetchTemperature(loc) : Promise.resolve(null),
     sourcesEnabled.waves ? fetchWaves(loc) : Promise.resolve(null),
-    sourcesEnabled.shipping ? fetchShipping(loc) : Promise.resolve(null),
+    sourcesEnabled.shipping && !opts.skipShipping
+      ? fetchShipping(loc)
+      : Promise.resolve(null),
   ]);
   const settled = <T>(r: PromiseSettledResult<T | null>): T | null =>
     r.status === "fulfilled" ? r.value : null;
 
-  // Use a live depth only when it's a clear sea depth (> 0 m). Otherwise keep
-  // the synthetic value rather than wrongly declaring the point "on land".
+  // Land/sea mask from the marine sources: they return values over water and
+  // nothing over land. `respondedLand` means a source answered but had no
+  // marine data there (land); `respondedWater` means real marine data came back.
+  let respondedWater = false;
+  let respondedLand = false;
+
   const dp = settled(dpR);
-  if (dp?.ok && dp.value != null && dp.value > 0) {
-    facts.depth_m = dp.value;
-    facts.confidence.depth = "measured";
-    facts.provenance.depth = "live";
+  if (dp?.ok) {
+    if (dp.value != null && dp.value > 0) {
+      facts.depth_m = dp.value;
+      facts.confidence.depth = "measured";
+      facts.provenance.depth = "live";
+      respondedWater = true;
+    } else {
+      respondedLand = true; // elevation >= 0 -> land / at sea level
+    }
   }
 
   const tp = settled(tpR);
-  if (tp?.ok && tp.value != null) {
-    facts.temp_c = tp.value;
-    facts.confidence.temp = "model";
-    facts.provenance.temp = "live";
+  if (tp?.ok) {
+    if (tp.value != null) {
+      facts.temp_c = tp.value;
+      facts.confidence.temp = "model";
+      facts.provenance.temp = "live";
+      respondedWater = true;
+    } else {
+      respondedLand = true;
+    }
   }
 
   const wv = settled(wvR);
-  if (wv?.ok && wv.value != null) {
-    facts.wave_hs_m = wv.value;
-    facts.confidence.wave = "model";
-    facts.provenance.wave = "live";
+  if (wv?.ok) {
+    if (wv.value != null) {
+      facts.wave_hs_m = wv.value;
+      facts.confidence.wave = "model";
+      facts.provenance.wave = "live";
+      respondedWater = true;
+    } else {
+      respondedLand = true;
+    }
   }
 
   const pa = settled(paR);
@@ -143,6 +175,11 @@ async function computeLiveFacts(loc: LatLng): Promise<Facts> {
     facts.nearShippingLane = sh.value;
     facts.provenance.shipping = "live";
   }
+
+  // Decide water vs land only when the marine sources actually responded; if
+  // they all errored (network), leave the optimistic synthetic default.
+  if (respondedWater) facts.onWater = true;
+  else if (respondedLand) facts.onWater = false;
 
   return facts;
 }

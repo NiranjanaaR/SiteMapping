@@ -282,9 +282,13 @@ export default function App() {
       id: Date.now(),
     });
 
-    // If live mode is on and this candidate wasn't in the pre-verified top set,
-    // verify it live on demand so every inspected site can show real data.
-    if (liveData && !isLiveFacts(c.facts)) {
+    // If live mode is on, make sure the opened site has full live data. Scan
+    // shortlist sites skip the AIS (shipping) call, so fetch the complete set
+    // (including shipping) when it isn't fully live yet.
+    if (
+      liveData &&
+      (!isLiveFacts(c.facts) || c.facts.provenance.shipping !== "live")
+    ) {
       const k = keyOf(c.location);
       setLoading(true);
       try {

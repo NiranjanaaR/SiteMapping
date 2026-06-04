@@ -16,25 +16,30 @@ export default function ScanList({ scan, activeIndex, onSelect, liveData }: Prop
   const ranked = scan.candidates;
   const viable = ranked.filter((c) => !c.result.excluded && c.result.score >= 45);
 
+  const shortlist = scan.liveVerified > 0;
+
   return (
     <>
       <div className="scan-summary">
-        Scanned <b>{scan.evaluated}</b> grid points within{" "}
-        <b>{scan.radiusKm} km</b> · <b>{scan.onWater}</b> on water ·{" "}
-        <b>{viable.length}</b> viable (score ≥ 45).
-        {scan.liveVerified > 0 && (
+        {shortlist ? (
           <>
-            {" "}
-            Top <b>{scan.liveVerified}</b> verified with{" "}
+            Best <b>{ranked.length}</b> water sites within{" "}
+            <b>{scan.radiusKm} km</b>, ranked and verified with{" "}
             <span className="prov live">live</span> data.
+          </>
+        ) : (
+          <>
+            Scanned <b>{scan.evaluated}</b> grid points within{" "}
+            <b>{scan.radiusKm} km</b> · <b>{scan.onWater}</b> on water ·{" "}
+            <b>{viable.length}</b> viable (score ≥ 45).
           </>
         )}
       </div>
 
-      {liveData && (
+      {liveData && !shortlist && (
         <div className="scan-hint">
-          💡 Top sites are pre-verified live. Click any dot to fetch live data
-          for it too.
+          💡 Demo grid — turn on live data to get a clean shortlist of real
+          water sites.
         </div>
       )}
 
