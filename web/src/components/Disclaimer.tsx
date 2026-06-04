@@ -5,11 +5,11 @@ export default function Disclaimer() {
         ⚠️
       </span>
       <span>
-        <b>Indicative pre-screening only.</b> This ranks candidate sites to hand
-        to a surveyor — it is not a substitute for a physical survey,
-        environmental assessment, or permit. Data is interpolated and a
-        snapshot in time; missing layers do <b>not</b> mean all-clear, and the
-        score is our weighted judgement.
+        <b>Prototype · synthetic data.</b> Depth, temperature, waves and the
+        protected/shipping flags are <b>generated demo values</b>, not live API
+        data yet — treat scores as a UI demonstration. When wired to the real
+        Norwegian sources this stays indicative pre-screening to hand to a
+        surveyor: not a substitute for a physical survey, assessment, or permit.
       </span>
     </div>
   );

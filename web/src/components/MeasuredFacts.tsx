@@ -51,9 +51,16 @@ export default function MeasuredFacts({ facts }: { facts: Facts }) {
       <div className="block-head">
         <span aria-hidden>🔒</span>
         <span>Measured facts</span>
-        <span className="tag">from APIs · read-only</span>
+        <span className="tag">demo data · read-only</span>
       </div>
       <div className="block-body">
+        <div className="synthetic-note">
+          ⚠ <b>Synthetic placeholder values.</b> These are generated for the
+          prototype — the live Norwegian sources (Kartverket depth, MET temp &
+          waves, Naturbase protected areas, BarentsWatch AIS) are not connected
+          yet, so the numbers are <b>not real measurements</b>. Place search is
+          live (Kartverket Stedsnavn); everything below is demo data.
+        </div>
         <FactRow
           name="Seafloor depth"
           value={facts.depth_m}

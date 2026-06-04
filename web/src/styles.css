@@ -14,7 +14,7 @@
   --fs-lg: 20px;
   --fs-xl: 26px;
   --fs-2xl: 34px;
-  --fs-score: 88px;
+  --fs-score: 72px;
 
   /* Marine palette */
   --navy: #0b2a3a;
@@ -410,11 +410,12 @@ button {
 /* Score hero */
 .score-hero {
   border-radius: var(--radius);
-  padding: 22px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 18px;
   color: #fff;
+  flex-wrap: wrap;
 }
 .score-hero.good {
   background: linear-gradient(135deg, #14935b, #0f7a4b);
@@ -433,15 +434,23 @@ button {
   font-weight: 800;
   line-height: 0.9;
   letter-spacing: -2px;
+  flex: none;
 }
 .score-number small {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   opacity: 0.8;
+  letter-spacing: 0;
+}
+.score-meta {
+  min-width: 0;
+  flex: 1 1 130px;
 }
 .score-meta .verdict {
   font-size: var(--fs-xl);
   font-weight: 800;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
 }
 .score-meta .place {
   font-size: var(--fs-base);
@@ -509,6 +518,17 @@ button {
 }
 .block-body {
   padding: 8px 16px 16px;
+}
+
+.synthetic-note {
+  background: var(--marginal-bg);
+  border: 1px solid #f0d79a;
+  color: #6b531c;
+  border-radius: 9px;
+  padding: 10px 12px;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  margin: 8px 0 4px;
 }
 
 /* Measured fact rows */
