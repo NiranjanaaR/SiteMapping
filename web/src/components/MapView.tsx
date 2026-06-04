@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import {
   Circle,
   CircleMarker,
@@ -148,23 +148,24 @@ export default function MapView({
             const isActive = i === activeIndex;
             const live = isLiveFacts(c.facts);
             const color = scoreColor(c.result);
+            const protectedRing = layers.protected && c.facts.inProtectedArea;
             return (
-              <CircleMarker
-                key={`${c.location.lat}-${c.location.lng}`}
-                center={[c.location.lat, c.location.lng]}
-                radius={isActive ? 11 : live ? 8 : 7}
-                pathOptions={{
-                  color: isActive ? "#0b2a3a" : live ? "#0b2a3a" : "#ffffff",
-                  weight: isActive ? 3 : live ? 2 : 1,
-                  fillColor: color,
-                  fillOpacity: 0.9,
-                }}
-                eventHandlers={{ click: () => onSelectCandidate(i) }}
-              >
-                {layers.protected && c.facts.inProtectedArea && (
+              <Fragment key={`${c.location.lat}-${c.location.lng}`}>
+                {/* Live-verified: solid dark ring (distinct from protected) */}
+                {live && (
                   <CircleMarker
                     center={[c.location.lat, c.location.lng]}
-                    radius={isActive ? 15 : 11}
+                    radius={isActive ? 13 : 10}
+                    interactive={false}
+                    pathOptions={{ color: "#0b2a3a", weight: 3, fill: false }}
+                  />
+                )}
+                {/* Protected area: green dashed ring (a data layer) */}
+                {protectedRing && (
+                  <CircleMarker
+                    center={[c.location.lat, c.location.lng]}
+                    radius={isActive ? 16 : 13}
+                    interactive={false}
                     pathOptions={{
                       color: "#2e7d32",
                       weight: 2,
@@ -173,24 +174,50 @@ export default function MapView({
                     }}
                   />
                 )}
-                <Tooltip direction="top" offset={[0, -6]}>
-                  <b>
-                    #{i + 1} · {c.result.excluded ? "Excluded" : c.result.score}
-                  </b>{" "}
-                  {c.result.verdict}
-                  {layers.depth && c.facts.depth_m != null && (
-                    <>
-                      <br />
-                      {c.facts.depth_m} m deep
-                    </>
-                  )}
-                  {layers.shipping && c.facts.nearShippingLane && (
-                    <>
-                      <br />⚓ near shipping lane
-                    </>
-                  )}
-                </Tooltip>
-              </CircleMarker>
+                <CircleMarker
+                  center={[c.location.lat, c.location.lng]}
+                  radius={isActive ? 9 : 6}
+                  pathOptions={{
+                    color: isActive ? "#0b2a3a" : "#ffffff",
+                    weight: isActive ? 2 : 1,
+                    fillColor: color,
+                    fillOpacity: 0.95,
+                  }}
+                  eventHandlers={{ click: () => onSelectCandidate(i) }}
+                >
+                  <Tooltip direction="top" offset={[0, -6]}>
+                    <b>
+                      #{i + 1} · {c.result.excluded ? "Excluded" : c.result.score}
+                    </b>{" "}
+                    {c.result.verdict}
+                    {live ? (
+                      <>
+                        <br />✓ live-verified
+                      </>
+                    ) : (
+                      <>
+                        <br />demo · click to verify live
+                      </>
+                    )}
+                    {protectedRing && (
+                      <>
+                        <br />🛡 protected area
+                      </>
+                    )}
+                    {layers.depth && c.facts.depth_m != null && (
+                      <>
+                        <br />
+                        {c.facts.depth_m} m deep
+                      </>
+                    )}
+                    {layers.shipping && c.facts.nearShippingLane && (
+                      <>
+                        <br />⚓ near shipping lane
+                      </>
+                    )}
+                  </Tooltip>
+                </CircleMarker>
+              </Fragment>
             );
           })}
 
@@ -238,12 +265,19 @@ export default function MapView({
         <div className="lg">
           <span className="dot" style={{ background: "#6b1f30" }} /> Excluded
         </div>
-        <div className="lg">
+        <div className="lg lg-sep">
           <span
-            className="dot"
-            style={{ background: "#16915a", border: "2px solid #0b2a3a" }}
+            className="ring"
+            style={{ border: "3px solid #0b2a3a" }}
           />{" "}
           Live-verified
+        </div>
+        <div className="lg">
+          <span
+            className="ring"
+            style={{ border: "2px dashed #2e7d32" }}
+          />{" "}
+          Protected area
         </div>
       </div>
 

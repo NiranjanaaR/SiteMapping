@@ -924,6 +924,18 @@ input[type="range"] {
   height: 14px;
   border-radius: 50%;
 }
+.map-legend .ring {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: transparent;
+  box-sizing: border-box;
+}
+.map-legend .lg-sep {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
 .map-loading {
   position: absolute;
   inset: 0;
