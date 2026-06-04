@@ -573,6 +573,10 @@ button {
   background: #eceff1;
   color: #6b7780;
 }
+.prov.na {
+  background: var(--marginal-bg);
+  color: var(--marginal);
+}
 
 /* Measured fact rows */
 .fact {

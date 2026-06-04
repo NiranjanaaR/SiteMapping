@@ -3,6 +3,7 @@ import type { ScoreResult } from "./types";
 /** Map a result to a single marker/dot colour (green / amber / red / dark). */
 export function scoreColor(result: ScoreResult): string {
   if (result.excluded) return "#6b1f30";
+  if (result.verdict === "No data") return "#8a99a3";
   if (result.score >= 70) return "#16915a";
   if (result.score >= 45) return "#d98a00";
   return "#cf4733";

@@ -8,7 +8,7 @@ export interface LatLng {
   lng: number;
 }
 
-export type Provenance = "live" | "synthetic";
+export type Provenance = "live" | "synthetic" | "unavailable";
 
 export interface Facts {
   depth_m: number | null;
@@ -42,8 +42,12 @@ export interface Rubric {
 
 export interface ScoreResult {
   score: number;
-  verdict: "Recommended" | "Marginal" | "Poor fit" | "Excluded";
-  breakdown: { depthFit: number; tempFit: number; waveFit: number };
+  verdict: "Recommended" | "Marginal" | "Poor fit" | "Excluded" | "No data";
+  breakdown: {
+    depthFit: number | null;
+    tempFit: number | null;
+    waveFit: number | null;
+  };
   reasons: string[];
   excluded: boolean;
 }

@@ -111,7 +111,25 @@ async function computeLiveFacts(
   loc: LatLng,
   opts: FactsOptions,
 ): Promise<Facts> {
-  const facts = getSyntheticFacts(loc);
+  // In live mode we never fall back to synthetic values: a fact is either a real
+  // measurement (provenance "live") or "unavailable" (value left null). This
+  // keeps the screen honest — no random number masquerading as a reading.
+  const facts: Facts = {
+    depth_m: null,
+    temp_c: null,
+    wave_hs_m: null,
+    inProtectedArea: false,
+    nearShippingLane: false,
+    onWater: true,
+    confidence: { depth: "missing", temp: "missing", wave: "missing" },
+    provenance: {
+      depth: "unavailable",
+      temp: "unavailable",
+      wave: "unavailable",
+      protectedArea: "unavailable",
+      shipping: "unavailable",
+    },
+  };
 
   // Use a batched depth if provided; otherwise fetch it per-point.
   const depthP = opts.depthOverride
@@ -146,7 +164,7 @@ async function computeLiveFacts(
   if (dp?.ok) {
     if (dp.value != null && dp.value > 0) {
       facts.depth_m = dp.value;
-      facts.confidence.depth = "measured";
+      facts.confidence.depth = "interpolated"; // GEBCO is a gridded model
       facts.provenance.depth = "live";
       respondedWater = true;
     } else {

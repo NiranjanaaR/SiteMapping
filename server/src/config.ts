@@ -30,7 +30,11 @@ export const config = {
   /** Optional — enables Frost as the preferred temperature source. */
   frostClientId: process.env.FROST_CLIENT_ID ?? "",
 
-  barentswatch: bw,
+  barentswatch: {
+    ...bw,
+    /** Override the OAuth scope if your client needs a specific one. */
+    scope: process.env.BARENTSWATCH_SCOPE ?? "",
+  },
 
   /** Naturbase / Miljødirektoratet protected-areas ArcGIS layer (point query). */
   protectedAreasUrl:

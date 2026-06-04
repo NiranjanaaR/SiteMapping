@@ -28,29 +28,42 @@ async function getToken(): Promise<string> {
   if (cachedToken.value && Date.now() < cachedToken.expiresAt - 30_000) {
     return cachedToken.value;
   }
-  const body = new URLSearchParams({
-    grant_type: "client_credentials",
-    client_id: config.barentswatch.clientId,
-    client_secret: config.barentswatch.clientSecret,
-    scope: "ais",
-  });
-  const res = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-    signal: AbortSignal.timeout(config.timeoutMs),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`token HTTP ${res.status} — ${body.slice(0, 200)}`);
+
+  // BarentsWatch's expected scope varies by account/API ("ais" vs "api"); try
+  // the configured one (or both) and use whichever the token endpoint accepts.
+  const scopes = config.barentswatch.scope
+    ? [config.barentswatch.scope]
+    : ["ais", "api"];
+  let lastError = "no scope tried";
+
+  for (const scope of scopes) {
+    const body = new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: config.barentswatch.clientId,
+      client_secret: config.barentswatch.clientSecret,
+      scope,
+    });
+    const res = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+      signal: AbortSignal.timeout(config.timeoutMs),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as {
+        access_token?: string;
+        expires_in?: number;
+      };
+      if (!data.access_token) throw new Error("no access_token in response");
+      cachedToken = {
+        value: data.access_token,
+        expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000,
+      };
+      return cachedToken.value;
+    }
+    lastError = `HTTP ${res.status} — ${(await res.text().catch(() => "")).slice(0, 160)} (scope=${scope})`;
   }
-  const data = (await res.json()) as { access_token?: string; expires_in?: number };
-  if (!data.access_token) throw new Error("no access_token");
-  cachedToken = {
-    value: data.access_token,
-    expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000,
-  };
-  return cachedToken.value;
+  throw new Error(`token ${lastError}`);
 }
 
 export async function fetchShipping(loc: LatLng): Promise<SourceOutcome<boolean>> {

@@ -40,11 +40,11 @@ function Breakdown({
                 {r.label} <span className="conf">· weight {r.w}</span>
               </span>
               <span style={{ fontWeight: 800 }}>
-                {Math.round(r.fit * 100)}%
+                {r.fit == null ? "n/a" : `${Math.round(r.fit * 100)}%`}
               </span>
             </div>
             <div className="fitbar">
-              <span style={{ width: `${Math.round(r.fit * 100)}%` }} />
+              <span style={{ width: `${Math.round((r.fit ?? 0) * 100)}%` }} />
             </div>
           </div>
         ))}

@@ -9,8 +9,9 @@ export interface LatLng {
   lng: number;
 }
 
-/** Whether a fact came from a live API or is synthetic demo data. */
-export type Provenance = "live" | "synthetic";
+/** Where a fact came from: a live API, synthetic demo data, or unavailable
+ * (live mode but the source failed / has no coverage — value left null). */
+export type Provenance = "live" | "synthetic" | "unavailable";
 
 /**
  * MEASURED FACTS — read-only, derived from the data APIs.
@@ -54,9 +55,14 @@ export interface Rubric {
 
 export interface ScoreResult {
   score: number;
-  verdict: "Recommended" | "Marginal" | "Poor fit" | "Excluded";
-  breakdown: { depthFit: number; tempFit: number; waveFit: number };
-  /** Human-readable notes: which penalties / exclusions fired. */
+  verdict: "Recommended" | "Marginal" | "Poor fit" | "Excluded" | "No data";
+  /** Per-factor fit 0..1, or null when that factor's data is unavailable. */
+  breakdown: {
+    depthFit: number | null;
+    tempFit: number | null;
+    waveFit: number | null;
+  };
+  /** Human-readable notes: penalties, exclusions, and unavailable factors. */
   reasons: string[];
   excluded: boolean;
 }
