@@ -14,6 +14,7 @@ import Header from "./components/Header";
 import MapView, { type ViewTarget } from "./components/MapView";
 import ReportPanel from "./components/ReportPanel";
 import ScanList from "./components/ScanList";
+import SiteReportDoc from "./components/SiteReportDoc";
 import SearchBar from "./components/SearchBar";
 import Sidebar, { type LayerState } from "./components/Sidebar";
 import { score } from "./scoring";
@@ -75,6 +76,12 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [liveData, setLiveData] = useState(false);
+  const [reportSite, setReportSite] = useState<{
+    location: LatLng & { placeName?: string };
+    facts: Facts;
+    result: ReturnType<typeof score>;
+    rubric: Rubric;
+  } | null>(null);
 
   // Load project types + seed the default rubric.
   useEffect(() => {
@@ -101,6 +108,11 @@ export default function App() {
 
   const defaultRubric = useMemo(
     () => projectTypes.find((p) => p.id === projectTypeId)?.defaultRubric ?? null,
+    [projectTypes, projectTypeId],
+  );
+
+  const projectTypeLabel = useMemo(
+    () => projectTypes.find((p) => p.id === projectTypeId)?.label ?? projectTypeId,
     [projectTypes, projectTypeId],
   );
 
@@ -363,6 +375,14 @@ export default function App() {
             facts={c.facts}
             result={c.result}
             {...editorProps}
+            onOpenReport={() =>
+              setReportSite({
+                location: c.location,
+                facts: c.facts,
+                result: c.result,
+                rubric,
+              })
+            }
           />
         </>
       );
@@ -401,6 +421,14 @@ export default function App() {
           facts={pick.facts}
           result={pickResult}
           {...editorProps}
+          onOpenReport={() =>
+            setReportSite({
+              location: pick.location,
+              facts: pick.facts,
+              result: pickResult,
+              rubric,
+            })
+          }
         />
       );
     }
@@ -507,6 +535,15 @@ export default function App() {
       </div>
 
       {error && <div className="toast">{error}</div>}
+
+      {reportSite && (
+        <SiteReportDoc
+          site={reportSite}
+          projectTypeLabel={projectTypeLabel}
+          liveData={liveData}
+          onClose={() => setReportSite(null)}
+        />
+      )}
     </div>
   );
 }

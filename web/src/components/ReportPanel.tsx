@@ -12,6 +12,7 @@ interface Props {
   isForked: boolean;
   onRubricChange: (r: Rubric) => void;
   onReset: () => void;
+  onOpenReport: () => void;
 }
 
 function Breakdown({
@@ -62,6 +63,7 @@ export default function ReportPanel({
   isForked,
   onRubricChange,
   onReset,
+  onOpenReport,
 }: Props) {
   const tone = toneClass(result);
 
@@ -93,6 +95,14 @@ export default function ReportPanel({
           </div>
         </div>
       </div>
+
+      <button
+        className="btn btn-ghost"
+        style={{ width: "100%", marginTop: 12 }}
+        onClick={onOpenReport}
+      >
+        📄 Open full report
+      </button>
 
       {result.reasons.length > 0 && (
         <div className="reasons">
