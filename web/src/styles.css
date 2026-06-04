@@ -715,6 +715,68 @@ input[type="range"] {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---- Describe-a-project intake ----------------------------------------- */
+
+.intake-text {
+  width: 100%;
+  font-family: inherit;
+  font-size: var(--fs-base);
+  padding: 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-2);
+  resize: vertical;
+}
+.intake-text:focus {
+  outline: none;
+  border-color: var(--criteria);
+  background: #fff;
+}
+.intake-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.chip {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  text-align: left;
+}
+.chip:hover {
+  border-color: var(--criteria);
+  color: var(--criteria);
+  background: var(--criteria-bg);
+}
+.interpretation {
+  margin-top: 16px;
+  background: var(--criteria-bg);
+  border: 1px solid #e0cdf0;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.interp-head {
+  font-weight: 800;
+  color: var(--criteria);
+  margin-bottom: 4px;
+}
+.interp-summary {
+  font-size: var(--fs-base);
+  margin: 0 0 8px;
+}
+.interp-notes {
+  margin: 0;
+  padding-left: 20px;
+}
+.interp-notes li {
+  font-size: var(--fs-sm);
+  padding: 2px 0;
+}
+
 /* ---- Disclaimer -------------------------------------------------------- */
 
 .disclaimer {

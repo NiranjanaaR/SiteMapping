@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { evaluate, fetchProjectTypes, scan as scanApi } from "./api";
+import { describe as describeApi, evaluate, fetchProjectTypes, scan as scanApi } from "./api";
 import { scoreColor } from "./colors";
 import CriteriaEditor from "./components/CriteriaEditor";
+import DescribeIntake from "./components/DescribeIntake";
 import Disclaimer from "./components/Disclaimer";
 import Header from "./components/Header";
 import MapView, { type ViewTarget } from "./components/MapView";
@@ -14,6 +15,7 @@ import type {
   Facts,
   GeocodeHit,
   InputMode,
+  IntakeResult,
   LatLng,
   ProjectType,
   ProjectTypeId,
@@ -58,6 +60,9 @@ export default function App() {
   const [pick, setPick] = useState<ClickPick | null>(null);
   const [scanRaw, setScanRaw] = useState<ScanRaw | null>(null);
   const [activeKey, setActiveKey] = useState<string | null>(null);
+
+  const [describeText, setDescribeText] = useState("");
+  const [intake, setIntake] = useState<IntakeResult | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -193,6 +198,58 @@ export default function App() {
     }
   }
 
+  async function runDescribe() {
+    if (!describeText.trim()) return;
+    setLoading(true);
+    setMode("describe");
+    try {
+      const res = await describeApi(describeText);
+      setIntake(res);
+      setProjectTypeId(res.projectType);
+      setRubric(res.rubric);
+
+      if (res.region) {
+        const center = { lat: res.region.lat, lng: res.region.lng };
+        setRadiusKm(res.region.radiusKm);
+        setPendingPlace({
+          placeName: res.region.placeName,
+          county: res.region.county ?? "",
+          lat: center.lat,
+          lng: center.lng,
+        });
+        const scanRes = await scanApi({
+          center,
+          radiusKm: res.region.radiusKm,
+          projectType: res.projectType,
+          rubric: res.rubric,
+        });
+        setScanRaw({
+          center: scanRes.center,
+          radiusKm: scanRes.radiusKm,
+          evaluated: scanRes.evaluated,
+          onWater: scanRes.onWater,
+          points: scanRes.candidates.map((c) => ({
+            location: c.location,
+            facts: c.facts,
+          })),
+        });
+        setActiveKey(null);
+        setViewTarget({
+          lat: center.lat,
+          lng: center.lng,
+          zoom: zoomForRadius(res.region.radiusKm),
+          id: Date.now(),
+        });
+      } else {
+        setScanRaw(null);
+      }
+    } catch (e) {
+      setError(`Could not interpret the brief: ${(e as Error).message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function selectCandidate(i: number) {
     if (!scan) return;
     const c = scan.candidates[i];
@@ -219,8 +276,29 @@ export default function App() {
       onReset: () => defaultRubric && setRubric(defaultRubric),
     };
 
-    // Scan mode, a candidate selected → its full report.
-    if (mode === "scan" && scan && activeIndex != null) {
+    const criteriaEditor = (
+      <CriteriaEditor
+        rubric={rubric}
+        defaultRubric={defaultRubric}
+        isForked={isForked}
+        onChange={setRubric}
+        onReset={editorProps.onReset}
+      />
+    );
+
+    const describeCard =
+      mode === "describe" ? (
+        <DescribeIntake
+          value={describeText}
+          onChange={setDescribeText}
+          onSubmit={runDescribe}
+          loading={loading}
+          result={intake}
+        />
+      ) : null;
+
+    // Scan / describe mode, a candidate selected → its full report.
+    if ((mode === "scan" || mode === "describe") && scan && activeIndex != null) {
       const c = scan.candidates[activeIndex];
       return (
         <>
@@ -241,13 +319,16 @@ export default function App() {
       );
     }
 
-    // Scan mode, list view.
-    if (mode === "scan") {
+    // Scan / describe mode, list view.
+    if (mode === "scan" || mode === "describe") {
       return (
         <>
+          {describeCard}
           {scan ? (
-            <ScanList scan={scan} activeIndex={activeIndex} onSelect={selectCandidate} />
-          ) : (
+            <div style={{ marginTop: mode === "describe" ? 18 : 0 }}>
+              <ScanList scan={scan} activeIndex={activeIndex} onSelect={selectCandidate} />
+            </div>
+          ) : mode === "scan" ? (
             <div className="empty-state">
               <div className="big">🗺️</div>
               <h2>Scan an area</h2>
@@ -257,14 +338,8 @@ export default function App() {
                 ranked best-first here.
               </p>
             </div>
-          )}
-          <CriteriaEditor
-            rubric={rubric}
-            defaultRubric={defaultRubric}
-            isForked={isForked}
-            onChange={setRubric}
-            onReset={editorProps.onReset}
-          />
+          ) : null}
+          {criteriaEditor}
         </>
       );
     }

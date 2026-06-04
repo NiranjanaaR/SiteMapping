@@ -69,4 +69,19 @@ export interface ScanResult {
   onWater: number;
 }
 
+export interface IntakeResult {
+  projectType: ProjectTypeId;
+  rubric: Rubric;
+  region: {
+    placeName: string;
+    county?: string;
+    lat: number;
+    lng: number;
+    radiusKm: number;
+  } | null;
+  interpretation: string;
+  notes: string[];
+  source: "rules" | "llm";
+}
+
 export type InputMode = "click" | "scan" | "describe";

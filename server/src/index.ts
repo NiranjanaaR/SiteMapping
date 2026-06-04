@@ -3,6 +3,7 @@
 //
 //   POST /api/evaluate   { lat, lng, projectType, rubric? }  -> SiteReport
 //   POST /api/scan       { center, radiusKm, projectType, rubric? } -> ScanResult
+//   POST /api/describe   { text }                            -> IntakeResult
 //   GET  /api/project-types                                  -> ProjectType[]
 //   GET  /api/geocode?q=...                                  -> GeocodeHit[]
 //   GET  /api/health
@@ -16,6 +17,7 @@ import cors from "cors";
 import express from "express";
 import { getFacts } from "./facts.js";
 import { geocode } from "./geocode.js";
+import { parseIntake } from "./intake.js";
 import { defaultRubricFor, getProjectType, PROJECT_TYPES } from "./rubrics.js";
 import { scanArea } from "./scan.js";
 import { score } from "./scoring.js";
@@ -38,6 +40,14 @@ app.get("/api/project-types", (_req, res) => {
 app.get("/api/geocode", (req, res) => {
   const q = String(req.query.q ?? "");
   res.json(geocode(q));
+});
+
+app.post("/api/describe", (req, res) => {
+  const text = String(req.body?.text ?? "").trim();
+  if (!text) {
+    return res.status(400).json({ error: "text is required" });
+  }
+  res.json(parseIntake(text));
 });
 
 function resolveRubric(projectType: string, supplied: unknown): Rubric | undefined {

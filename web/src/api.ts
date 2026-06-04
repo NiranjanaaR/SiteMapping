@@ -1,5 +1,6 @@
 import type {
   GeocodeHit,
+  IntakeResult,
   LatLng,
   ProjectType,
   Rubric,
@@ -49,5 +50,12 @@ export function scan(args: {
   return jsonFetch<ScanResult>("/api/scan", {
     method: "POST",
     body: JSON.stringify(args),
+  });
+}
+
+export function describe(text: string): Promise<IntakeResult> {
+  return jsonFetch<IntakeResult>("/api/describe", {
+    method: "POST",
+    body: JSON.stringify({ text }),
   });
 }

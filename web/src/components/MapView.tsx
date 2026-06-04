@@ -205,6 +205,11 @@ export default function MapView({
           🗺️ Search a place or pan the map, pick a radius, then “Scan area”
         </div>
       )}
+      {mode === "describe" && !scan && (
+        <div className="map-hint">
+          💬 Describe your project on the right to auto-scan a region
+        </div>
+      )}
 
       <div className="map-legend">
         <div className="lg">

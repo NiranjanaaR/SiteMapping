@@ -11,9 +11,19 @@ per-project rubric** to produce a transparent 0–100 suitability score with a
 factor-by-factor breakdown.
 
 This is the **thin vertical slice** from the build brief: the full scoring engine,
-all three input modes in the UI, the editable rubric, and the persistent scope
-disclaimer — built against the real data contract with **mocked facts**, so the
-live Norwegian APIs can be swapped in one source at a time without touching the UI.
+all **three input modes** (click a point · scan an area · describe a project),
+the editable rubric, and the persistent scope disclaimer — built against the real
+data contract with **mocked facts**, so the live Norwegian APIs can be swapped in
+one source at a time without touching the UI.
+
+### Input modes (spec §4)
+
+1. **Click a point** — one coordinate → one full site report.
+2. **Scan an area** — place search + radius (10/30/50 km) lays a grid, scores every
+   candidate, and returns a ranked shortlist + a coloured-dot heatmap.
+3. **Describe a project** — a plain-language brief ("2-hectare mussel farm near
+   Bergen, budget-sensitive") is parsed into a project type, an editable rubric, and
+   a region, then the area scan runs. Every inferred choice is shown for transparency.
 
 ## Core concept: facts vs. criteria
 
@@ -62,7 +72,15 @@ web/      React + Vite + TypeScript + Leaflet
   components/ReportPanel single-site report (score, facts, breakdown)
   components/CriteriaEditor  editable rubric (the "your criteria" block)
   components/ScanList   ranked shortlist for area mode
+  components/DescribeIntake  natural-language brief → interpretation + scan
 ```
+
+The intake parser (`server/src/intake.ts`) is a **deterministic, transparent
+rule-based parser** — it detects the project type, region, radius, and rubric
+tweaks from the text and records a note for every inference. It runs offline with
+no external dependency. An LLM backend can drop in behind the same `IntakeResult`
+contract (emit the same shape from a model call), exactly as the facts layer is
+structured for swapping in live APIs.
 
 ### API
 
@@ -70,6 +88,7 @@ web/      React + Vite + TypeScript + Leaflet
 |--------|---------------------|-----------------------------------------------|--------------|
 | POST   | `/api/evaluate`     | `{ lat, lng, projectType, rubric? }`          | `SiteReport` |
 | POST   | `/api/scan`         | `{ center:{lat,lng}, radiusKm, projectType, rubric? }` | `ScanResult` |
+| POST   | `/api/describe`     | `{ text }`                                     | `IntakeResult` |
 | GET    | `/api/project-types`| —                                             | `ProjectType[]` |
 | GET    | `/api/geocode`      | `?q=Florø`                                     | `GeocodeHit[]` |
 | GET    | `/api/health`       | —                                             | status       |

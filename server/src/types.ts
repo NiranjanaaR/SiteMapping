@@ -72,3 +72,23 @@ export interface GeocodeHit {
   lat: number;
   lng: number;
 }
+
+/**
+ * Result of parsing a natural-language project brief (spec §4 mode 3) into the
+ * structured inputs the scan engine needs. `notes` make every inferred change
+ * transparent so the user can see *why* the rubric was tweaked.
+ */
+export interface IntakeResult {
+  projectType: ProjectTypeId;
+  rubric: Rubric;
+  region: {
+    placeName: string;
+    county?: string;
+    lat: number;
+    lng: number;
+    radiusKm: number;
+  } | null;
+  interpretation: string;
+  notes: string[];
+  source: "rules" | "llm";
+}

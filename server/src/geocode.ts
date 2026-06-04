@@ -5,7 +5,7 @@
 
 import type { GeocodeHit } from "./types.js";
 
-const PLACES: GeocodeHit[] = [
+export const PLACES: GeocodeHit[] = [
   { placeName: "Florø", county: "Vestland", lat: 61.6, lng: 5.03 },
   { placeName: "Bergen", county: "Vestland", lat: 60.39, lng: 5.32 },
   { placeName: "Ålesund", county: "Møre og Romsdal", lat: 62.47, lng: 6.15 },
@@ -25,6 +25,17 @@ const PLACES: GeocodeHit[] = [
   { placeName: "Mandal", county: "Agder", lat: 58.03, lng: 7.45 },
   { placeName: "Brønnøysund", county: "Nordland", lat: 65.47, lng: 12.21 },
 ];
+
+/** Find the first known place mentioned anywhere in a free-text string. */
+export function findPlaceInText(text: string): GeocodeHit | undefined {
+  const lower = text.toLowerCase();
+  // Prefer the longest matching name so "Kristiansund" wins over "Kristiansand"
+  // only when actually present; longest-first avoids partial mis-hits.
+  const byLength = [...PLACES].sort(
+    (a, b) => b.placeName.length - a.placeName.length,
+  );
+  return byLength.find((p) => lower.includes(p.placeName.toLowerCase()));
+}
 
 export function geocode(query: string, limit = 8): GeocodeHit[] {
   const q = query.trim().toLowerCase();

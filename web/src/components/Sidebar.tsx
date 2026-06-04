@@ -35,7 +35,7 @@ const MODES: { id: InputMode; icon: string; title: string; desc: string }[] = [
     id: "describe",
     icon: "💬",
     title: "Describe a project",
-    desc: "Natural-language intake (coming soon).",
+    desc: "Natural-language intake → auto rubric + scan.",
   },
 ];
 
@@ -68,8 +68,6 @@ export default function Sidebar({
               key={m.id}
               className={`mode-btn ${m.id === mode ? "active" : ""}`}
               onClick={() => onModeChange(m.id)}
-              disabled={m.id === "describe"}
-              title={m.id === "describe" ? "Planned — built last (spec §8)" : ""}
             >
               <span className="micon" aria-hidden>
                 {m.icon}
