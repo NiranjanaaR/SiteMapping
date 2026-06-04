@@ -40,6 +40,13 @@ export default function SearchBar({
   const [chosen, setChosen] = useState<GeocodeHit | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Focus the relevant top-bar input when the mode changes, so attention lands
+  // where the action happens.
+  useEffect(() => {
+    if (mode === "scan" || mode === "describe") inputRef.current?.focus();
+  }, [mode]);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -141,6 +148,7 @@ export default function SearchBar({
             💬
           </span>
           <input
+            ref={inputRef}
             type="text"
             aria-label="Describe your project"
             placeholder="Describe your project — e.g. 2-hectare kelp farm near Arendal, sheltered water"
@@ -172,6 +180,7 @@ export default function SearchBar({
           🔍
         </span>
         <input
+          ref={inputRef}
           type="text"
           aria-label="Search for a place on the Norwegian coast"
           placeholder="Search a place — e.g. Florø, Bergen, Bodø…"

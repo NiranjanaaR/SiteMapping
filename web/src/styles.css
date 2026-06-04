@@ -77,10 +77,33 @@ button {
 /* ---- App shell --------------------------------------------------------- */
 
 .app {
-  display: grid;
-  grid-template-rows: auto auto 1fr;
+  display: flex;
+  flex-direction: column;
   height: 100vh;
   overflow: hidden;
+}
+
+/* One-line guidance directly under the top bar, near where you act. */
+.mode-hint-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: var(--measured-bg);
+  border-bottom: 1px solid var(--line);
+  color: var(--measured);
+  font-size: var(--fs-base);
+  font-weight: 600;
+}
+
+.calm-note {
+  color: var(--muted);
+  font-size: var(--fs-base);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 0 0 16px;
 }
 
 /* ---- Header ------------------------------------------------------------ */
@@ -287,6 +310,7 @@ button {
 .columns {
   display: grid;
   grid-template-columns: 300px 1fr 420px;
+  flex: 1;
   min-height: 0;
 }
 

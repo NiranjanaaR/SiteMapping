@@ -22,11 +22,8 @@ export default function DescribeIntake({ onPickExample, result }: Props) {
       </div>
       <div className="block-body">
         <p className="project-blurb" style={{ marginTop: 0 }}>
-          Type a plain-language brief in the bar at the <b>top</b> (e.g. “kelp
-          farm near Arendal, sheltered water”) and press{" "}
-          <b>✨ Interpret &amp; scan</b>. It’s parsed into a project type, an
-          editable rubric, and a region, then the scan runs — every inferred
-          choice is shown below. Or tap an example to fill it in:
+          Tap an example to fill the bar above (or write your own), then press{" "}
+          <b>✨ Interpret &amp; scan</b>:
         </p>
         <div className="intake-examples">
           {EXAMPLES.map((ex) => (

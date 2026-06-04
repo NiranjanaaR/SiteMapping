@@ -236,20 +236,6 @@ export default function MapView({
         )}
       </MapContainer>
 
-      {mode === "click" && (
-        <div className="map-hint">📍 Click on water to screen a site</div>
-      )}
-      {mode === "scan" && !scan && (
-        <div className="map-hint">
-          🗺️ Search a place or pan the map, pick a radius, then “▶ Run scan”
-        </div>
-      )}
-      {mode === "describe" && !scan && (
-        <div className="map-hint">
-          💬 Describe your project on the right to auto-scan a region
-        </div>
-      )}
-
       <div className="map-legend">
         <div className="lg">
           <span className="dot" style={{ background: "#16915a" }} /> Recommended

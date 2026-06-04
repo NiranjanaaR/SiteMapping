@@ -383,15 +383,10 @@ export default function App() {
             />
             </div>
           ) : mode === "scan" ? (
-            <div className="empty-state">
-              <div className="big">🗺️</div>
-              <h2>Scan an area</h2>
-              <p>
-                Search a place (or pan the map), pick a radius above, then press
-                <b> ▶ Run scan</b>. Candidate sites appear as coloured dots,
-                ranked best-first here.
-              </p>
-            </div>
+            <p className="calm-note">
+              Ranked water sites will appear here after a scan. Meanwhile, your
+              criteria are below.
+            </p>
           ) : null}
           {criteriaEditor}
         </>
@@ -411,14 +406,10 @@ export default function App() {
     }
     return (
       <>
-        <div className="empty-state">
-          <div className="big">📍</div>
-          <h2>Pick a point</h2>
-          <p>
-            Click anywhere on the water to screen a site. The score, the measured
-            facts, and your editable criteria all appear here.
-          </p>
-        </div>
+        <p className="calm-note">
+          A site’s report will appear here once you click a point. Meanwhile,
+          your criteria are below.
+        </p>
         <CriteriaEditor
           rubric={rubric}
           defaultRubric={defaultRubric}
@@ -438,6 +429,16 @@ export default function App() {
           color: scoreColor(pickResult),
         }
       : null;
+
+  // One-line nudge right under the top bar, shown until there are results.
+  const hint =
+    mode === "click" && !pick
+      ? "📍 Click anywhere on the water to screen a site — its report appears on the right."
+      : mode === "scan" && !scan
+        ? "🗺️ Search a place and pick a radius above, then press ▶ Run scan."
+        : mode === "describe" && !scan
+          ? "💬 Type your project in the bar above, then press ✨ Interpret & scan."
+          : null;
 
   if (!rubric || !defaultRubric) {
     return (
@@ -466,6 +467,7 @@ export default function App() {
         onDescribeSubmit={runDescribe}
         describing={loading && mode === "describe"}
       />
+      {hint && <div className="mode-hint-bar">{hint}</div>}
       <div className="columns">
         <Sidebar
           mode={mode}
