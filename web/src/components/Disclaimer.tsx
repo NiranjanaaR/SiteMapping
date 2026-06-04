@@ -5,11 +5,13 @@ export default function Disclaimer() {
         ⚠️
       </span>
       <span>
-        <b>Prototype · synthetic data.</b> Depth, temperature, waves and the
-        protected/shipping flags are <b>generated demo values</b>, not live API
-        data yet — treat scores as a UI demonstration. When wired to the real
-        Norwegian sources this stays indicative pre-screening to hand to a
-        surveyor: not a substitute for a physical survey, assessment, or permit.
+        <b>Indicative pre-screening only.</b> Check each fact's{" "}
+        <span className="prov live">live</span> /{" "}
+        <span className="prov demo">demo</span> tag — demo values are synthetic.
+        Even with live data this ranks candidate sites to hand to a surveyor; it
+        is not a substitute for a physical survey, assessment, or permit. Values
+        are interpolated snapshots and missing layers do <b>not</b> mean
+        all-clear.
       </span>
     </div>
   );

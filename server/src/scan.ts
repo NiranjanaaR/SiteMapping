@@ -7,7 +7,7 @@
 // (spec §7). Here the facts are synthesised, so the grid is cheap.
 // ---------------------------------------------------------------------------
 
-import { getFacts } from "./facts.js";
+import { getSyntheticFacts } from "./facts.js";
 import { score } from "./scoring.js";
 import type { LatLng, Rubric, SiteReport } from "./types.js";
 
@@ -69,7 +69,7 @@ export function scanArea(req: ScanRequest): ScanResult {
       if (haversineKm(center, point) > radiusKm) continue;
 
       evaluated++;
-      const facts = getFacts(point);
+      const facts = getSyntheticFacts(point);
       if (!facts.onWater) continue; // skip land — no marine site there
       onWater++;
 

@@ -12,9 +12,10 @@ factor-by-factor breakdown.
 
 This is the **thin vertical slice** from the build brief: the full scoring engine,
 all **three input modes** (click a point · scan an area · describe a project),
-the editable rubric, and the persistent scope disclaimer — built against the real
-data contract with **mocked facts**, so the live Norwegian APIs can be swapped in
-one source at a time without touching the UI.
+the editable rubric, and the persistent scope disclaimer. It runs on synthetic
+demo data out of the box, and connects to the real Norwegian sources when you
+add a `.env` (see [Live data](#live-data)) — each fact is tagged **live** or
+**demo** in the UI.
 
 ### Input modes (spec §4)
 
@@ -60,10 +61,12 @@ npm run dev:web    # web only
 server/   Express + TypeScript API
   scoring.ts   the scoring engine (band() + score()) — spec §5
   rubrics.ts   locked default rubrics per project type
-  facts.ts     MOCK facts provider (swap for live APIs here)
-  geocode.ts   place search (mock Kartverket Stedsnavn)
-  scan.ts      grid-scan engine for area mode
-  index.ts     routes: /evaluate /scan /project-types /geocode /health
+  config.ts    env-driven live-data config + feature flags
+  facts.ts     orchestrates live sources over a synthetic baseline (+ provenance)
+  sources/     one module per live source (depth, temperature, waves, …)
+  geocode.ts   place search — live Kartverket Stedsnavn, mock fallback
+  scan.ts      grid-scan engine for area mode (synthetic, fast)
+  index.ts     routes: /evaluate /scan /describe /geocode /config /diagnostics
 
 web/      React + Vite + TypeScript + Leaflet
   App.tsx               state, live re-scoring, mode handling
@@ -115,22 +118,56 @@ round-trip (facts never change — only your criteria).
 
 Defaults are locked; editing forks a working copy you can always reset.
 
-## Going from mock to live data
+## Live data
 
-Only `server/src/facts.ts` is mocked. To go live (spec §8), replace `getFacts()`
-with parallel fans-out to the public Norwegian sources, normalising each response
-into the same `Facts` shape — the contract and the UI stay unchanged:
+Single-point evaluation (**Click a point**) fans out to live sources in parallel
+when `LIVE_DATA=true`; each fact is tagged **live** or **demo** in the UI. Area
+scans always use the fast synthetic generator (calling live APIs for hundreds of
+grid points would hit rate limits). Anything that fails or is unconfigured falls
+back to synthetic, so the app always works.
 
-| Concern | Source |
-|---------|--------|
-| Legal exclusions | Geonorge / Naturbase + Kystverket + Fiskeridirektoratet (WFS) |
-| Seafloor depth | Kartverket bathymetry |
-| Temperature & waves | MET Norway Frost + MET Ocean / THREDDS |
-| Shipping traffic | BarentsWatch AIS |
-| Geocoding | Kartverket Stedsnavn |
+| Fact | Source | Auth |
+|------|--------|------|
+| Water temperature | MET oceanforecast (`sea_water_temperature`) | none |
+| Significant wave height | Open-Meteo Marine (`wave_height`) | none |
+| Protected / excluded area | Naturbase / Miljødirektoratet (ArcGIS point query) | none |
+| Seafloor depth | EMODnet Bathymetry (WMS GetFeatureInfo) | none |
+| Shipping traffic | BarentsWatch AIS | OAuth2 |
+| Temperature (optional override) | MET Frost (nearest sea-temp station) | free client id |
+| Geocoding (place search) | Kartverket Stedsnavn | none |
 
-For scan mode, cache the slow-changing layers (depth, protected areas) and only
-fetch live ocean data for the top candidates.
+### Setup
+
+```bash
+cp .env.example .env      # repo root (or server/.env)
+# edit .env: set LIVE_DATA=true, a real MET_USER_AGENT, and your
+# BARENTSWATCH_CLIENT_ID / BARENTSWATCH_CLIENT_SECRET
+npm run dev
+```
+
+- **BarentsWatch (shipping):** create a free API client at
+  <https://www.barentswatch.no/minside/> and paste id + secret.
+- **MET Frost (optional):** request a free client id at
+  <https://frost.met.no/auth/requestCredentials.html> to prefer station-based
+  temperature. Water temperature works without it (MET oceanforecast).
+- The other sources (depth, waves, protected areas, geocoding) need **no
+  credentials**.
+
+### Verify your setup
+
+```
+GET /api/config                       # which sources are enabled
+GET /api/diagnostics?lat=63.4&lng=8.0 # runs every source, reports ok/value/error
+```
+
+`/api/diagnostics` is the quickest way to confirm credentials and spot a source
+that needs an endpoint tweak (e.g. if EMODnet's layer name or the BarentsWatch
+AIS path changes for your account — both are overridable via `.env`).
+
+### Caching for scan mode (future)
+
+To make scans live too, cache the slow-changing layers (depth, protected areas)
+and fetch live ocean data only for the top-ranked candidates (spec §7).
 
 ## Honest scope
 

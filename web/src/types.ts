@@ -8,6 +8,8 @@ export interface LatLng {
   lng: number;
 }
 
+export type Provenance = "live" | "synthetic";
+
 export interface Facts {
   depth_m: number | null;
   temp_c: number | null;
@@ -19,6 +21,13 @@ export interface Facts {
     depth: "measured" | "interpolated" | "missing";
     temp: "station" | "model" | "missing";
     wave: "model" | "missing";
+  };
+  provenance: {
+    depth: Provenance;
+    temp: Provenance;
+    wave: Provenance;
+    protectedArea: Provenance;
+    shipping: Provenance;
   };
 }
 

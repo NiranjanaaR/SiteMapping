@@ -6,21 +6,29 @@
 //   POST /api/describe   { text }                            -> IntakeResult
 //   GET  /api/project-types                                  -> ProjectType[]
 //   GET  /api/geocode?q=...                                  -> GeocodeHit[]
+//   GET  /api/config                                         -> { liveData, sourcesEnabled }
+//   GET  /api/diagnostics?lat=&lng=                          -> per-source status
 //   GET  /api/health
 //
-// The scoring engine and rubric handling are production-shaped; only the `facts`
-// provider is mocked, so live API calls can be swapped in one source at a time
-// without touching the contract or the UI.
+// Single-point evaluation fans out to the live Norwegian sources (when
+// LIVE_DATA is on); area scans use the fast synthetic generator. Everything
+// falls back to synthetic so the UI works with or without live data.
 // ---------------------------------------------------------------------------
 
 import cors from "cors";
 import express from "express";
+import { config, sourcesEnabled } from "./config.js";
 import { getFacts } from "./facts.js";
 import { geocodeLive } from "./geocode.js";
 import { parseIntake } from "./intake.js";
 import { defaultRubricFor, getProjectType, PROJECT_TYPES } from "./rubrics.js";
 import { scanArea } from "./scan.js";
 import { score } from "./scoring.js";
+import { fetchDepth } from "./sources/depth.js";
+import { fetchProtectedArea } from "./sources/protectedArea.js";
+import { fetchShipping } from "./sources/shipping.js";
+import { fetchTemperature } from "./sources/temperature.js";
+import { fetchWaves } from "./sources/waves.js";
 import type { Rubric, SiteReport } from "./types.js";
 
 const app = express();
@@ -31,6 +39,42 @@ const PORT = Number(process.env.PORT) || 5174;
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "kystkonsulent", time: new Date().toISOString() });
+});
+
+app.get("/api/config", (_req, res) => {
+  res.json({ liveData: config.liveData, sourcesEnabled });
+});
+
+// Run every source for a point and report ok/value/error — handy for verifying
+// credentials and endpoints during setup. Attempts all sources regardless of
+// the enabled flags so misconfiguration is visible.
+app.get("/api/diagnostics", async (req, res) => {
+  const lat = Number(req.query.lat);
+  const lng = Number(req.query.lng);
+  const point = {
+    lat: Number.isFinite(lat) ? lat : 63.43,
+    lng: Number.isFinite(lng) ? lng : 7.5,
+  };
+  const [protectedArea, depth, temperature, waves, shipping] = await Promise.all([
+    fetchProtectedArea(point),
+    fetchDepth(point),
+    fetchTemperature(point),
+    fetchWaves(point),
+    sourcesEnabled.shipping
+      ? fetchShipping(point)
+      : Promise.resolve({
+          ok: false,
+          value: null,
+          source: "BarentsWatch AIS",
+          error: "not configured (set BARENTSWATCH_CLIENT_ID/SECRET + LIVE_DATA=true)",
+        }),
+  ]);
+  res.json({
+    liveData: config.liveData,
+    sourcesEnabled,
+    point,
+    sources: { protectedArea, depth, temperature, waves, shipping },
+  });
 });
 
 app.get("/api/project-types", (_req, res) => {
@@ -55,7 +99,7 @@ function resolveRubric(projectType: string, supplied: unknown): Rubric | undefin
   return defaultRubricFor(projectType);
 }
 
-app.post("/api/evaluate", (req, res) => {
+app.post("/api/evaluate", async (req, res) => {
   const { lat, lng, projectType, rubric, placeName } = req.body ?? {};
   if (typeof lat !== "number" || typeof lng !== "number") {
     return res.status(400).json({ error: "lat and lng (numbers) are required" });
@@ -68,7 +112,7 @@ app.post("/api/evaluate", (req, res) => {
     return res.status(400).json({ error: "no rubric available" });
   }
 
-  const facts = getFacts({ lat, lng });
+  const facts = await getFacts({ lat, lng });
   const result = score(facts, effectiveRubric);
   const report: SiteReport = {
     location: { lat, lng, placeName },
@@ -109,4 +153,15 @@ app.post("/api/scan", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Kystkonsulent API listening on http://localhost:${PORT}`);
+  if (config.liveData) {
+    const on = Object.entries(sourcesEnabled)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+    console.log(`Live data ON — sources: ${on.join(", ") || "(none enabled)"}`);
+    if (!sourcesEnabled.shipping) {
+      console.log("  shipping (AIS) off — set BARENTSWATCH_CLIENT_ID/SECRET to enable");
+    }
+  } else {
+    console.log("Live data OFF — serving synthetic demo data (set LIVE_DATA=true)");
+  }
 });

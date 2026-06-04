@@ -9,6 +9,9 @@ export interface LatLng {
   lng: number;
 }
 
+/** Whether a fact came from a live API or is synthetic demo data. */
+export type Provenance = "live" | "synthetic";
+
 /**
  * MEASURED FACTS — read-only, derived from the data APIs.
  * The user can never edit these. A `null` value means "no coverage / unknown".
@@ -20,11 +23,19 @@ export interface Facts {
   inProtectedArea: boolean;
   nearShippingLane: boolean;
   onWater: boolean;
-  /** Per-field provenance so the UI can flag false precision. */
+  /** Per-field confidence so the UI can flag false precision. */
   confidence: {
     depth: "measured" | "interpolated" | "missing";
     temp: "station" | "model" | "missing";
     wave: "model" | "missing";
+  };
+  /** Per-field provenance: live API value vs synthetic demo value. */
+  provenance: {
+    depth: Provenance;
+    temp: Provenance;
+    wave: Provenance;
+    protectedArea: Provenance;
+    shipping: Provenance;
   };
 }
 
