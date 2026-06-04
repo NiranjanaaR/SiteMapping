@@ -124,8 +124,8 @@ app.post("/api/evaluate", async (req, res) => {
   res.json(report);
 });
 
-app.post("/api/scan", (req, res) => {
-  const { center, radiusKm, projectType, rubric } = req.body ?? {};
+app.post("/api/scan", async (req, res) => {
+  const { center, radiusKm, projectType, rubric, live } = req.body ?? {};
   if (
     !center ||
     typeof center.lat !== "number" ||
@@ -142,11 +142,12 @@ app.post("/api/scan", (req, res) => {
   }
   const radius = Number(radiusKm) || 30;
 
-  const result = scanArea({
+  const result = await scanArea({
     center,
     radiusKm: radius,
     projectType,
     rubric: effectiveRubric,
+    live: live === true,
   });
   res.json(result);
 });

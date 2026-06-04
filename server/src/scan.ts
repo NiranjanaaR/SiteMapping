@@ -1,13 +1,17 @@
 // ---------------------------------------------------------------------------
-// Area-scan engine (spec §4 mode 2). Lays a grid over a radius or bounding box,
-// evaluates every candidate point, and returns a ranked shortlist (best first).
+// Area-scan engine (spec §4 mode 2). Lays a grid over a radius, evaluates every
+// candidate point with the fast synthetic generator, and returns a ranked
+// shortlist (best first).
 //
-// In production the slow-changing layers (depth, protected areas) would be
-// cached and only the top candidates would trigger live ocean-data fetches
-// (spec §7). Here the facts are synthesised, so the grid is cheap.
+// When `live` is requested (and LIVE_DATA is on), the top candidates are then
+// re-checked against the real sources — cached and concurrency-limited — and the
+// shortlist is re-ranked. This is the spec §7 strategy: rank cheaply, then spend
+// live calls only on the candidates that matter.
 // ---------------------------------------------------------------------------
 
-import { getSyntheticFacts } from "./facts.js";
+import { mapLimit } from "./cache.js";
+import { config } from "./config.js";
+import { getFacts, getSyntheticFacts } from "./facts.js";
 import { score } from "./scoring.js";
 import type { LatLng, Rubric, SiteReport } from "./types.js";
 
@@ -36,6 +40,8 @@ export interface ScanRequest {
   rubric: Rubric;
   /** Cap the grid so a big radius cannot explode the request. */
   maxPoints?: number;
+  /** Verify the top candidates against live sources (needs LIVE_DATA). */
+  live?: boolean;
 }
 
 export interface ScanResult {
@@ -44,9 +50,11 @@ export interface ScanResult {
   candidates: SiteReport[];
   evaluated: number;
   onWater: number;
+  /** How many top candidates were verified against live sources. */
+  liveVerified: number;
 }
 
-export function scanArea(req: ScanRequest): ScanResult {
+export async function scanArea(req: ScanRequest): Promise<ScanResult> {
   const { center, radiusKm, projectType, rubric } = req;
   const maxPoints = req.maxPoints ?? 400;
 
@@ -87,5 +95,25 @@ export function scanArea(req: ScanRequest): ScanResult {
   // Rank: best score first; excluded sites sink to the bottom.
   candidates.sort((a, b) => b.result.score - a.result.score);
 
-  return { center, radiusKm, candidates, evaluated, onWater };
+  // Verify the top candidates with live data, then re-rank on the real numbers.
+  let liveVerified = 0;
+  if (req.live && config.liveData) {
+    const top = candidates.slice(0, config.scanLiveTop);
+    await mapLimit(top, config.scanConcurrency, async (cand) => {
+      try {
+        const liveFacts = await getFacts(cand.location);
+        cand.facts = liveFacts;
+        cand.result = score(liveFacts, rubric);
+        // Only count it as verified if a source actually returned live data.
+        if (Object.values(liveFacts.provenance).some((p) => p === "live")) {
+          liveVerified++;
+        }
+      } catch {
+        // keep the synthetic facts/result on failure
+      }
+    });
+    candidates.sort((a, b) => b.result.score - a.result.score);
+  }
+
+  return { center, radiusKm, candidates, evaluated, onWater, liveVerified };
 }

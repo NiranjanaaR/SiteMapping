@@ -76,6 +76,17 @@ export interface ScanResult {
   candidates: SiteReport[];
   evaluated: number;
   onWater: number;
+  liveVerified: number;
+}
+
+export interface AppConfig {
+  liveData: boolean;
+  sourcesEnabled: Record<string, boolean>;
+}
+
+/** True if any fact for a site came from a live source. */
+export function isLiveFacts(facts: Facts): boolean {
+  return Object.values(facts.provenance).some((p) => p === "live");
 }
 
 export interface IntakeResult {

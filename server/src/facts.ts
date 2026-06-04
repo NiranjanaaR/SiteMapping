@@ -11,6 +11,7 @@
 // re-clicking a point or re-running a scan is stable.
 // ---------------------------------------------------------------------------
 
+import { cached } from "./cache.js";
 import { config, sourcesEnabled } from "./config.js";
 import { fetchDepth } from "./sources/depth.js";
 import { fetchProtectedArea } from "./sources/protectedArea.js";
@@ -98,13 +99,17 @@ export function getSyntheticFacts(loc: LatLng): Facts {
 }
 
 /**
- * Live facts: synthetic baseline overlaid with whatever the live sources return.
- * Each source runs in parallel and independently; a failure simply leaves that
- * field on its synthetic value (and provenance "synthetic").
+ * Live facts (cached by ~100 m): synthetic baseline overlaid with whatever the
+ * live sources return. When LIVE_DATA is off this is just the synthetic facts.
  */
 export async function getFacts(loc: LatLng): Promise<Facts> {
+  if (!config.liveData) return getSyntheticFacts(loc);
+  const key = `${loc.lat.toFixed(3)},${loc.lng.toFixed(3)}`;
+  return cached(key, config.factsCacheTtlMs, () => computeLiveFacts(loc));
+}
+
+async function computeLiveFacts(loc: LatLng): Promise<Facts> {
   const facts = getSyntheticFacts(loc);
-  if (!config.liveData) return facts;
 
   const [paR, dpR, tpR, wvR, shR] = await Promise.allSettled([
     sourcesEnabled.protectedArea ? fetchProtectedArea(loc) : Promise.resolve(null),

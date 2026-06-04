@@ -46,6 +46,15 @@ export const config = {
 
   /** Per-request timeout for any single source call. */
   timeoutMs: Number(process.env.SOURCE_TIMEOUT_MS) || 6000,
+
+  /** How long live facts for a point are reused (ms). Default 30 min. */
+  factsCacheTtlMs: Number(process.env.FACTS_CACHE_TTL_MS) || 30 * 60 * 1000,
+
+  /** In a scan, how many top candidates get verified with live data. */
+  scanLiveTop: Number(process.env.SCAN_LIVE_TOP) || 12,
+
+  /** Max concurrent live fetches during a scan. */
+  scanConcurrency: Number(process.env.SCAN_CONCURRENCY) || 6,
 };
 
 /** Which sources should actually be attempted, given the config. */

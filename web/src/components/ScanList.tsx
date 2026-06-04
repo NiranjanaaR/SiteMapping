@@ -1,5 +1,5 @@
 import { scoreColor } from "../colors";
-import type { ScanResult, SiteReport } from "../types";
+import { isLiveFacts, type ScanResult, type SiteReport } from "../types";
 
 interface Props {
   scan: ScanResult;
@@ -21,6 +21,13 @@ export default function ScanList({ scan, activeIndex, onSelect }: Props) {
         Scanned <b>{scan.evaluated}</b> grid points within{" "}
         <b>{scan.radiusKm} km</b> · <b>{scan.onWater}</b> on water ·{" "}
         <b>{viable.length}</b> viable (score ≥ 45).
+        {scan.liveVerified > 0 && (
+          <>
+            {" "}
+            Top <b>{scan.liveVerified}</b> verified with{" "}
+            <span className="prov live">live</span> data.
+          </>
+        )}
       </div>
 
       {ranked.length === 0 && (
@@ -42,7 +49,10 @@ export default function ScanList({ scan, activeIndex, onSelect }: Props) {
             {c.result.excluded ? "✕" : c.result.score}
           </span>
           <span className="scan-info">
-            <span className="sv">{c.result.verdict}</span>
+            <span className="sv">
+              {c.result.verdict}
+              {isLiveFacts(c.facts) && <span className="prov live">live</span>}
+            </span>
             <br />
             <span className="sc">{shortPlace(c)}</span>
           </span>

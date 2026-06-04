@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { describe as describeApi, evaluate, fetchProjectTypes, scan as scanApi } from "./api";
+import {
+  describe as describeApi,
+  evaluate,
+  fetchConfig,
+  fetchProjectTypes,
+  scan as scanApi,
+} from "./api";
 import { scoreColor } from "./colors";
 import CriteriaEditor from "./components/CriteriaEditor";
 import DescribeIntake from "./components/DescribeIntake";
@@ -34,6 +40,7 @@ interface ScanRaw {
   radiusKm: number;
   evaluated: number;
   onWater: number;
+  liveVerified: number;
   points: { location: LatLng; facts: Facts }[];
 }
 
@@ -66,6 +73,7 @@ export default function App() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [liveData, setLiveData] = useState(false);
 
   // Load project types + seed the default rubric.
   useEffect(() => {
@@ -79,6 +87,9 @@ export default function App() {
         }
       })
       .catch((e) => setError(`Could not load project types: ${e.message}`));
+    fetchConfig()
+      .then((c) => setLiveData(c.liveData))
+      .catch(() => setLiveData(false));
   }, []);
 
   useEffect(() => {
@@ -124,6 +135,7 @@ export default function App() {
       candidates,
       evaluated: scanRaw.evaluated,
       onWater: scanRaw.onWater,
+      liveVerified: scanRaw.liveVerified,
     };
   }, [scanRaw, rubric, projectTypeId]);
 
@@ -176,12 +188,14 @@ export default function App() {
         radiusKm,
         projectType: projectTypeId,
         rubric,
+        live: liveData,
       });
       setScanRaw({
         center: res.center,
         radiusKm: res.radiusKm,
         evaluated: res.evaluated,
         onWater: res.onWater,
+        liveVerified: res.liveVerified,
         points: res.candidates.map((c) => ({
           location: c.location,
           facts: c.facts,
@@ -225,12 +239,14 @@ export default function App() {
           radiusKm: res.region.radiusKm,
           projectType: res.projectType,
           rubric: res.rubric,
+          live: liveData,
         });
         setScanRaw({
           center: scanRes.center,
           radiusKm: scanRes.radiusKm,
           evaluated: scanRes.evaluated,
           onWater: scanRes.onWater,
+          liveVerified: scanRes.liveVerified,
           points: scanRes.candidates.map((c) => ({
             location: c.location,
             facts: c.facts,

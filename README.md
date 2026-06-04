@@ -121,10 +121,16 @@ Defaults are locked; editing forks a working copy you can always reset.
 ## Live data
 
 Single-point evaluation (**Click a point**) fans out to live sources in parallel
-when `LIVE_DATA=true`; each fact is tagged **live** or **demo** in the UI. Area
-scans always use the fast synthetic generator (calling live APIs for hundreds of
-grid points would hit rate limits). Anything that fails or is unconfigured falls
-back to synthetic, so the app always works.
+when `LIVE_DATA=true`; each fact is tagged **live** or **demo** in the UI.
+
+**Scan** ranks the full grid with the fast synthetic generator, then verifies the
+top candidates (`SCAN_LIVE_TOP`, default 12) against the live sources — cached
+and concurrency-limited — and re-ranks on the real numbers (spec §7: rank
+cheaply, spend live calls only where they matter). Verified sites get a dark ring
+on the map and a **live** badge in the list. Live facts are cached per ~100 m
+(`FACTS_CACHE_TTL_MS`, default 30 min) so re-clicks and overlapping scans reuse
+them. Anything that fails or is unconfigured falls back to synthetic, so the app
+always works.
 
 | Fact | Source | Auth |
 |------|--------|------|

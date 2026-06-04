@@ -1,4 +1,5 @@
 import type {
+  AppConfig,
   GeocodeHit,
   IntakeResult,
   LatLng,
@@ -7,6 +8,10 @@ import type {
   ScanResult,
   SiteReport,
 } from "./types";
+
+export function fetchConfig(): Promise<AppConfig> {
+  return jsonFetch<AppConfig>("/api/config");
+}
 
 async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -46,6 +51,7 @@ export function scan(args: {
   radiusKm: number;
   projectType: string;
   rubric?: Rubric;
+  live?: boolean;
 }): Promise<ScanResult> {
   return jsonFetch<ScanResult>("/api/scan", {
     method: "POST",

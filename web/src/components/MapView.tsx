@@ -10,7 +10,7 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import { scoreColor } from "../colors";
-import type { InputMode, LatLng, ScanResult } from "../types";
+import { isLiveFacts, type InputMode, type LatLng, type ScanResult } from "../types";
 import type { LayerState } from "./Sidebar";
 
 export interface ViewTarget {
@@ -146,15 +146,16 @@ export default function MapView({
         {scan &&
           scan.candidates.map((c, i) => {
             const isActive = i === activeIndex;
+            const live = isLiveFacts(c.facts);
             const color = scoreColor(c.result);
             return (
               <CircleMarker
                 key={`${c.location.lat}-${c.location.lng}`}
                 center={[c.location.lat, c.location.lng]}
-                radius={isActive ? 11 : 7}
+                radius={isActive ? 11 : live ? 8 : 7}
                 pathOptions={{
-                  color: isActive ? "#0b2a3a" : "#ffffff",
-                  weight: isActive ? 3 : 1,
+                  color: isActive ? "#0b2a3a" : live ? "#0b2a3a" : "#ffffff",
+                  weight: isActive ? 3 : live ? 2 : 1,
                   fillColor: color,
                   fillOpacity: 0.9,
                 }}
@@ -236,6 +237,13 @@ export default function MapView({
         </div>
         <div className="lg">
           <span className="dot" style={{ background: "#6b1f30" }} /> Excluded
+        </div>
+        <div className="lg">
+          <span
+            className="dot"
+            style={{ background: "#16915a", border: "2px solid #0b2a3a" }}
+          />{" "}
+          Live-verified
         </div>
       </div>
 
