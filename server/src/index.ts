@@ -16,7 +16,7 @@
 import cors from "cors";
 import express from "express";
 import { getFacts } from "./facts.js";
-import { geocode } from "./geocode.js";
+import { geocodeLive } from "./geocode.js";
 import { parseIntake } from "./intake.js";
 import { defaultRubricFor, getProjectType, PROJECT_TYPES } from "./rubrics.js";
 import { scanArea } from "./scan.js";
@@ -37,9 +37,9 @@ app.get("/api/project-types", (_req, res) => {
   res.json(PROJECT_TYPES);
 });
 
-app.get("/api/geocode", (req, res) => {
+app.get("/api/geocode", async (req, res) => {
   const q = String(req.query.q ?? "");
-  res.json(geocode(q));
+  res.json(await geocodeLive(q));
 });
 
 app.post("/api/describe", (req, res) => {

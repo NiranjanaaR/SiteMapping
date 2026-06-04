@@ -6,7 +6,8 @@ interface Props {
   radiusKm: number;
   onRadiusChange: (km: number) => void;
   onSelectPlace: (hit: GeocodeHit) => void;
-  onScan: () => void;
+  /** Scan a place (or the current map centre when `place` is null). */
+  onScan: (place: GeocodeHit | null) => void;
   scanReady: boolean;
   scanning: boolean;
 }
@@ -25,6 +26,8 @@ export default function SearchBar({
   const [hits, setHits] = useState<GeocodeHit[]>([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const [chosen, setChosen] = useState<GeocodeHit | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,11 +67,46 @@ export default function SearchBar({
   function choose(hit: GeocodeHit) {
     setQuery(`${hit.placeName}, ${hit.county}`);
     setOpen(false);
+    setChosen(hit);
+    setNotice(null);
     onSelectPlace(hit);
   }
 
+  // Resolve whatever is typed before scanning, so the scan never silently uses
+  // the wrong centre. Empty box → scan the current map centre.
+  async function handleScan() {
+    setNotice(null);
+    const q = query.trim();
+
+    if (!q) {
+      onScan(null);
+      return;
+    }
+    if (chosen && q === `${chosen.placeName}, ${chosen.county}`) {
+      onScan(chosen);
+      return;
+    }
+    try {
+      const res = await geocode(q);
+      if (res.length) {
+        choose(res[0]);
+        onScan(res[0]);
+      } else {
+        setNotice(`No place found for “${q}”. Try another name or click the map.`);
+      }
+    } catch {
+      setNotice("Place search is unavailable right now — click the map to pick a centre.");
+    }
+  }
+
   function onKeyDown(e: React.KeyboardEvent) {
-    if (!open || hits.length === 0) return;
+    if (!open || hits.length === 0) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleScan();
+      }
+      return;
+    }
     if (e.key === "ArrowDown") {
       e.preventDefault();
       setActive((a) => Math.min(a + 1, hits.length - 1));
@@ -94,7 +132,11 @@ export default function SearchBar({
           aria-label="Search for a place on the Norwegian coast"
           placeholder="Search a place — e.g. Florø, Bergen, Bodø…"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setChosen(null);
+            setNotice(null);
+          }}
           onFocus={() => hits.length && setOpen(true)}
           onKeyDown={onKeyDown}
         />
@@ -113,6 +155,7 @@ export default function SearchBar({
             ))}
           </div>
         )}
+        {notice && <div className="search-notice">{notice}</div>}
       </div>
 
       <div className="radius-group" role="group" aria-label="Scan radius">
@@ -129,7 +172,7 @@ export default function SearchBar({
 
       <button
         className="btn btn-primary"
-        onClick={onScan}
+        onClick={handleScan}
         disabled={!scanReady || scanning}
         title={
           scanReady

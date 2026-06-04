@@ -202,6 +202,21 @@ button {
   color: var(--muted);
   font-size: var(--fs-sm);
 }
+.search-notice {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--poor-bg);
+  color: var(--poor);
+  border: 1px solid #f0c4bd;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  z-index: 40;
+}
 
 .radius-group {
   display: flex;

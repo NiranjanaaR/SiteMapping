@@ -160,11 +160,14 @@ export default function App() {
     }
   }
 
-  async function runScan() {
+  async function runScan(place: GeocodeHit | null) {
     if (!rubric) return;
-    const center = pendingPlace
-      ? { lat: pendingPlace.lat, lng: pendingPlace.lng }
-      : mapCenter;
+    if (place) setPendingPlace(place);
+    const center = place
+      ? { lat: place.lat, lng: place.lng }
+      : pendingPlace
+        ? { lat: pendingPlace.lat, lng: pendingPlace.lng }
+        : mapCenter;
     setLoading(true);
     setMode("scan");
     try {
