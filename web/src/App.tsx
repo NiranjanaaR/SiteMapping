@@ -17,6 +17,7 @@ import ScanList from "./components/ScanList";
 import SearchBar from "./components/SearchBar";
 import Sidebar, { type LayerState } from "./components/Sidebar";
 import { score } from "./scoring";
+import { isLiveFacts } from "./types";
 import type {
   Facts,
   GeocodeHit,
@@ -269,8 +270,8 @@ export default function App() {
     }
   }
 
-  function selectCandidate(i: number) {
-    if (!scan) return;
+  async function selectCandidate(i: number) {
+    if (!scan || !rubric) return;
     const c = scan.candidates[i];
     if (!c) return;
     setActiveKey(keyOf(c.location));
@@ -280,6 +281,37 @@ export default function App() {
       zoom: 11,
       id: Date.now(),
     });
+
+    // If live mode is on and this candidate wasn't in the pre-verified top set,
+    // verify it live on demand so every inspected site can show real data.
+    if (liveData && !isLiveFacts(c.facts)) {
+      const k = keyOf(c.location);
+      setLoading(true);
+      try {
+        const report = await evaluate({
+          lat: c.location.lat,
+          lng: c.location.lng,
+          projectType: projectTypeId,
+          rubric,
+        });
+        setScanRaw((prev) =>
+          prev
+            ? {
+                ...prev,
+                points: prev.points.map((p) =>
+                  keyOf(p.location) === k
+                    ? { location: p.location, facts: report.facts }
+                    : p,
+                ),
+              }
+            : prev,
+        );
+      } catch (e) {
+        setError(`Live check failed: ${(e as Error).message}`);
+      } finally {
+        setLoading(false);
+      }
+    }
   }
 
   // --- right panel content ----------------------------------------------
@@ -345,7 +377,12 @@ export default function App() {
           {describeCard}
           {scan ? (
             <div style={{ marginTop: mode === "describe" ? 18 : 0 }}>
-              <ScanList scan={scan} activeIndex={activeIndex} onSelect={selectCandidate} />
+              <ScanList
+              scan={scan}
+              activeIndex={activeIndex}
+              onSelect={selectCandidate}
+              liveData={liveData}
+            />
             </div>
           ) : mode === "scan" ? (
             <div className="empty-state">

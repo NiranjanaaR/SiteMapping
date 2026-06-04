@@ -5,13 +5,14 @@ interface Props {
   scan: ScanResult;
   activeIndex: number | null;
   onSelect: (index: number) => void;
+  liveData: boolean;
 }
 
 function shortPlace(report: SiteReport): string {
   return `${report.location.lat.toFixed(3)}, ${report.location.lng.toFixed(3)}`;
 }
 
-export default function ScanList({ scan, activeIndex, onSelect }: Props) {
+export default function ScanList({ scan, activeIndex, onSelect, liveData }: Props) {
   const ranked = scan.candidates;
   const viable = ranked.filter((c) => !c.result.excluded && c.result.score >= 45);
 
@@ -29,6 +30,13 @@ export default function ScanList({ scan, activeIndex, onSelect }: Props) {
           </>
         )}
       </div>
+
+      {liveData && (
+        <div className="scan-hint">
+          💡 Top sites are pre-verified live. Click any dot to fetch live data
+          for it too.
+        </div>
+      )}
 
       {ranked.length === 0 && (
         <div className="empty-state">

@@ -746,6 +746,16 @@ input[type="range"] {
 .scan-summary b {
   color: var(--ink);
 }
+.scan-hint {
+  background: var(--measured-bg);
+  color: var(--measured);
+  border-radius: 9px;
+  padding: 9px 12px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
 .scan-item {
   display: flex;
   align-items: center;
