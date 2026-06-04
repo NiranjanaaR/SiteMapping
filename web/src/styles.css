@@ -110,6 +110,22 @@ button {
   font-size: var(--fs-sm);
   color: #aecbd8;
 }
+.header .mode-badge {
+  margin-left: 18px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+.header .mode-badge.live {
+  background: #16915a;
+  color: #fff;
+}
+.header .mode-badge.demo {
+  background: rgba(255, 255, 255, 0.16);
+  color: #d7e6ee;
+}
 .header .spacer {
   flex: 1;
 }

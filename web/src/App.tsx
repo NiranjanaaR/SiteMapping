@@ -407,7 +407,7 @@ export default function App() {
   if (!rubric || !defaultRubric) {
     return (
       <div className="app">
-        <Header userEmail={USER_EMAIL} />
+        <Header userEmail={USER_EMAIL} liveData={liveData} />
         <div className="map-loading" style={{ position: "static", padding: 60 }}>
           Loading Kystkonsulent…
         </div>
@@ -417,7 +417,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <Header userEmail={USER_EMAIL} />
+      <Header userEmail={USER_EMAIL} liveData={liveData} />
       <SearchBar
         radiusKm={radiusKm}
         onRadiusChange={setRadiusKm}
