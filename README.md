@@ -141,6 +141,8 @@ missing layers do not mean all-clear, and the score is a weighted judgement.
 
 ## Notes
 
-- Base map tiles come from Kartverket (with an OpenStreetMap fallback in the
-  layer switcher). They require outbound network access; in a restricted sandbox
-  the map background may appear blank while the rest of the UI works normally.
+- The default base map is the clean, pale **CARTO Positron** style (the same
+  look as tidevannstabell.no), with Voyager, Kartverket topo, and OpenStreetMap
+  available in the layer switcher (top-right of the map). Tiles require outbound
+  network access; in a restricted sandbox the map background may appear blank
+  while the rest of the UI works normally.

@@ -86,17 +86,28 @@ export default function MapView({
         center={[initialCenter.lat, initialCenter.lng]}
         zoom={6}
         minZoom={4}
-        maxZoom={16}
+        maxZoom={18}
         scrollWheelZoom
       >
         <LayersControl position="topright">
-          <LayersControl.BaseLayer checked name="Kartverket topo (grå)">
+          {/* Clean, pale basemap — same look as tidevannstabell.no (CARTO Positron). */}
+          <LayersControl.BaseLayer checked name="Light (CARTO Positron)">
             <TileLayer
-              attribution='&copy; <a href="https://www.kartverket.no/">Kartverket</a>'
-              url="https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+              subdomains="abcd"
+              maxZoom={20}
             />
           </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Kartverket topo (colour)">
+          <LayersControl.BaseLayer name="Voyager (CARTO)">
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              subdomains="abcd"
+              maxZoom={20}
+            />
+          </LayersControl.BaseLayer>
+          <LayersControl.BaseLayer name="Kartverket topo">
             <TileLayer
               attribution='&copy; <a href="https://www.kartverket.no/">Kartverket</a>'
               url="https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png"
